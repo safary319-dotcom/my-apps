@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Дневник здоровья</title>
+<style>
+:root{
+  --bg:#f7f2e7; --card:#fffdf7; --ink:#3d3a33; --muted:#8a8375; --line:#e6ddca;
+  --acc:#5f8f6b; --accsoft:#e4efe4; --warn:#b3543f; --warnsoft:#f7e3dd; --chip:#f1ead9;
+}
+body.dark{ --bg:#1d1c19; --card:#282723; --ink:#eae4d6; --muted:#9a937f; --line:#3a3831;
+  --acc:#8fc79b; --accsoft:#2e3b2f; --warn:#e08b74; --warnsoft:#3c2b26; --chip:#33302a; }
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+html,body{margin:0; padding:0; background:var(--bg); color:var(--ink);
+  font:17px/1.45 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;}
+body{padding-bottom:78px;}
+header{position:sticky;top:0;z-index:20;background:var(--bg);padding:10px 12px 6px;display:flex;align-items:center;gap:6px;}
+h1{font-size:19px;margin:0;flex:1;font-weight:700}
+.hbtn{min-width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--card);font-size:18px;color:var(--ink);padding:0 8px}
+main{padding:6px 12px 12px;max-width:640px;margin:0 auto}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin:10px 0;box-shadow:0 1px 3px rgba(60,50,20,.06)}
+.lbl{font-size:13px;color:var(--muted);margin:12px 0 6px;text-transform:uppercase;letter-spacing:.6px}
+.card .lbl:first-child{margin-top:0}
+.scale{display:flex;gap:8px}
+.scale button{flex:1;height:46px;border-radius:12px;border:1px solid var(--line);background:var(--chip);font-size:22px;color:var(--ink)}
+.scale button.on{background:var(--accsoft);border-color:var(--acc)}
+.rowflex{display:flex;gap:8px;align-items:center}
+input[type=number],input[type=text],input[type=time],input[type=search],textarea{
+  width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font-size:17px}
+textarea{min-height:64px;resize:vertical;font-family:inherit}
+.stepbtn{width:46px;height:46px;flex:none;border-radius:12px;border:1px solid var(--line);background:var(--chip);font-size:22px;color:var(--ink)}
+.big{display:block;width:100%;padding:14px;border-radius:14px;border:0;background:var(--acc);color:#fff;font-size:18px;font-weight:700;margin-top:14px}
+.bigsec{display:block;width:100%;padding:11px;border-radius:12px;border:1px solid var(--line);background:var(--chip);color:var(--ink);font-size:16px;font-weight:600;margin-top:8px}
+.vv{outline:2px solid var(--acc);background:var(--accsoft)!important}
+.hint{font-size:13px;color:var(--muted);margin-top:4px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:var(--chip);font-size:15px}
+.chip.on{background:var(--accsoft);border-color:var(--acc)}
+.mini{width:34px;height:34px;flex:none;border-radius:10px;border:1px solid var(--line);background:var(--chip);font-size:16px;color:var(--ink)}
+nav{position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;background:var(--card);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;padding:9px 4px;background:none;border:0;color:var(--muted);font-size:12px}
+nav button span{display:block;font-size:22px}
+nav button.on{color:var(--acc);font-weight:700}
+.overlay{position:fixed;inset:0;background:rgba(30,25,10,.5);z-index:40;display:flex;align-items:flex-end;justify-content:center}
+.owin{background:var(--card);border-radius:18px 18px 0 0;width:100%;max-width:640px;padding:16px;max-height:84vh;overflow:auto}
+.ohd{font-weight:700;font-size:18px;margin-bottom:8px}
+.plaque{position:fixed;left:12px;right:12px;bottom:86px;z-index:35;background:var(--warnsoft);border:1px solid var(--warn);border-radius:14px;padding:12px;font-size:15px}
+.plaque .pbtns{display:flex;gap:8px;margin-top:8px}
+.plaque button{flex:1;padding:9px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:14px}
+#toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-size:14px;z-index:50;opacity:0;transition:opacity .25s;pointer-events:none;max-width:90vw;text-align:center}
+.recline{padding:12px 4px;border-bottom:1px solid var(--line)}
+.recline .rd{font-weight:700}
+.recline .rv{color:var(--muted);font-size:14px;margin-top:2px}
+.statline{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed var(--line);font-size:15px}
+.statline b{font-size:16px}
+.hidden{display:none!important}
+#interim{font-size:13px;color:var(--muted);min-height:18px}
+</style>
+</head>
+<body>
+<header>
+  <h1>🌿 Дневник здоровья</h1>
+  <button class="hbtn" id="voicebtn" title="Записать голосом">🎤</button>
+  <button class="hbtn" id="importbtn" title="Импорт из файла">⬆</button>
+  <button class="hbtn" id="exportbtn" title="Экспорт (бэкап)">⬇</button>
+  <button class="hbtn" id="helpbtn" title="Помощь">?</button>
+  <button class="hbtn" id="themebtn" title="Тема">🌙</button>
+</header>
+<main>
+  <div id="docwarn" class="card hidden" style="border-color:var(--warn);background:var(--warnsoft)"></div>
+  <div id="editbanner" class="card hidden" style="padding:10px 14px"></div>
+
+  <!-- ================= СЕГОДНЯ ================= -->
+  <section id="tab-today">
+    <div class="card" id="todaycard">
+      <div class="lbl">Самочувствие</div>
+      <div class="scale" id="feelScale"></div>
+      <div class="lbl">Настроение</div>
+      <div class="scale" id="moodScale"></div>
+      <div class="lbl">Сон</div>
+      <div class="rowflex">
+        <input type="number" id="f_sleep" inputmode="decimal" step="0.5" min="0" max="24" placeholder="часов, напр. 7,5">
+        <span>ч</span>
+      </div>
+      <div class="lbl">Качество сна</div>
+      <div class="scale" id="sleepqScale"></div>
+      <div class="lbl">Давление и пульс</div>
+      <div class="rowflex">
+        <input type="number" id="f_sys" inputmode="numeric" min="60" max="260" placeholder="верхнее">
+        <span style="color:var(--muted)">/</span>
+        <input type="number" id="f_dia" inputmode="numeric" min="30" max="180" placeholder="нижнее">
+        <span style="color:var(--muted)">·</span>
+        <input type="number" id="f_pulse" inputmode="numeric" min="30" max="220" placeholder="пульс">
+      </div>
+      <div class="lbl">Вес</div>
+      <input type="number" id="f_weight" inputmode="decimal" step="0.1" min="20" max="400" placeholder="кг, напр. 91,2">
+      <div class="lbl">Вода</div>
+      <div class="rowflex">
+        <button class="stepbtn" id="wminus">−</button>
+        <input type="number" id="f_water" inputmode="numeric" min="0" max="20" style="text-align:center">
+        <button class="stepbtn" id="wplus">+</button>
+        <span style="color:var(--muted)">стаканов</span>
+      </div>
+      <div class="lbl">Активность</div>
+      <div class="rowflex">
+        <input type="number" id="f_steps" inputmode="numeric" min="0" max="200000" placeholder="шаги или минуты ходьбы">
+        <select id="f_stepsunit" style="width:auto;flex:none"><option value="шаги">шаги</option><option value="мин">мин</option></select>
+      </div>
+      <div class="lbl">Лекарства и витамины</div>
+      <div class="chips" id="medChips"></div>
+      <div class="rowflex" style="margin-top:8px">
+        <input type="text" id="medNew" placeholder="добавить препарат…">
+        <button class="mini" id="medAdd">＋</button>
+      </div>
+      <div class="hint">Галочки сохраняются вместе с записью дня.</div>
+      <div class="lbl">Симптомы и заметки</div>
+      <textarea id="f_note" placeholder="голова болит, устала…"></textarea>
+      <button class="big" id="savebtn">💾 Сохранить</button>
+      <div class="hint" id="todayhint">Заполнять всё не обязательно — запишите то, что есть. Голосом: нажмите 🎤 и скажите, например, «сон семь с половиной часов, вес 91, давление сто двадцать на восемьдесят, голова болит».</div>
+    </div>
+  </section>
+
+  <!-- ================= ИСТОРИЯ ================= -->
+  <section id="tab-history" class="hidden">
+    <div class="card">
+      <input type="search" id="histSearch" placeholder="поиск по заметкам и датам…">
+      <div id="histList"></div>
+      <div class="hint" id="histEmpty" hidden>Пока пусто. Запишите первый день на вкладке «Сегодня».</div>
+    </div>
+  </section>
+
+  <!-- ================= СТАТИСТИКА ================= -->
+  <section id="tab-stats" class="hidden">
+    <div class="card">
+      <div class="lbl">За 7 дней</div>
+      <div id="stat7"></div>
+      <div class="lbl">За 30 дней</div>
+      <div id="stat30"></div>
+      <div class="lbl">Серия дней подряд</div>
+      <div id="streak" style="font-size:20px;font-weight:700"></div>
+      <div class="lbl">Вес за месяц</div>
+      <div id="chart"></div>
+      <div class="hint" id="statEmpty" hidden>Статистика появится, когда накопится пара записей.</div>
+    </div>
+  </section>
+</main>
+
+<nav>
+  <button id="nb-today" class="on" data-tab="today"><span>📝</span>Сегодня</button>
+  <button id="nb-history" data-tab="history"><span>📚</span>История</button>
+  <button id="nb-stats" data-tab="stats"><span>📊</span>Статистика</button>
+</nav>
+
+<div class="plaque hidden" id="remind">
+  <div id="remindText">⏰ Вечерний чек-ин — пора записать день!</div>
+  <div class="pbtns">
+    <button id="rGo">Записать</button>
+    <button id="rSnooze">+30 мин</button>
+    <button id="rClose">✕</button>
+  </div>
+</div>
+
+<div class="overlay hidden" id="voicewrap">
+  <div class="owin">
+    <div class="ohd">🎤 Запись голосом</div>
+    <div id="interim"></div>
+    <textarea id="voiceText" placeholder="Здесь появится распознанный текст — его можно поправить перед сохранением"></textarea>
+    <div class="hint" id="voicePreview"></div>
+    <button class="big" id="voiceApply">Разобрать и применить</button>
+    <button class="bigsec" id="voiceCancel">Отмена</button>
+    <div class="hint" id="voiceHint"></div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="helpwrap">
+  <div class="owin">
+    <div class="ohd">Помощь</div>
+    <div style="font-size:15px;line-height:1.5">
+      <p><b>🎤 Голосом</b><br>Нажмите 🎤 и говорите спокойно. Пример: «сон семь часов, вес 91, давление сто двадцать на восемьдесят, пульс 70, вода 6 стаканов, голова немного болит». Текст можно поправить руками перед применением. Если микрофон системы недоступен — включите голосовой ввод в клавиатуре Gboard (офлайн-пакет русского) и диктуйте прямо в поле заметки.</p>
+      <p><b>📝 Что записывается</b><br>Самочувствие и настроение (шкалы 1–5), сон и его качество, давление, пульс, вес, стаканы воды, активность, лекарства, заметки. Всё необязательно — можно записать хоть один параметр.</p>
+      <p><b>🔔 Напоминания</b><br>Вечерний чек-ин прозвенит, если вкладка приложения открыта. Это честное ограничение браузера: для действительно важного поставьте системный будильник.</p>
+      <p><b>💊 Лекарства</b><br>Добавьте свои препараты в форму — они появятся галочками, отмечайте принятые каждый день.</p>
+      <p><b>⬇ Бэкап</b><br>Раз в неделю сохраняйте копию кнопкой ⬇ (формат Markdown или CSV). Кнопка ⬆ восстанавливает данные из файла — удобно для переноса на новое устройство.</p>
+      <p><b>⏰ Время чек-ина</b><br><input type="time" id="remindTime"> — сохраняется автоматически.</p>
+      <p><b>🔒 Приватность</b><br>Все данные хранятся только в этом браузере и никуда не отправляются.</p>
+      <p><b>⚠️ Это дневник, а не врач.</b> Приложение только фиксирует и показывает статистику, без диагнозов. Если самочувствие плохое несколько дней подряд — покажется мягкая подсказка, но решать вам.</p>
+    </div>
+    <button class="big" id="helpClose">Понятно</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+<input type="file" id="filein" hidden accept=".csv,.txt,.md">
+
+<script>
+'use strict';
+//== LOGIC START ==
+// ===== словарь чисел (без флага /i: работаем по toLowerCase, флаг не нужен) =====
+var NUM = {
+  'ноль':0,'один':1,'одна':1,'два':2,'две':2,'три':3,'четыре':4,'пять':5,'шесть':6,
+  'семь':7,'восемь':8,'девять':9,'десять':10,'одиннадцать':11,'двенадцать':12,
+  'тринадцать':13,'четырнадцать':14,'пятнадцать':15,'шестнадцать':16,'семнадцать':17,
+  'восемнадцать':18,'девятнадцать':19,'двадцать':20,'тридцать':30,'сорок':40,
+  'пятьдесят':50,'шестьдесят':60,'семьдесят':70,'восемьдесят':80,'девяносто':90,
+  'сто':100,'двести':200,'триста':300,'четыреста':400,'пятьсот':500,'шестьсот':600,
+  'семьсот':700,'восемьсот':800,'девятьсот':900
+};
+var QUAL={'ужас':1,'ужасн':1,'плох':2,'нормальн':3,'нормально':3,'средне':3,'так себ':3,'хорош':4,'неплох':4,'отличн':5,'прекрасн':5,'превосходн':5};
+function qualAt(tokens, i){
+  for(var k=0;k<3;k++){
+    var t=tokens[i+k]; if(!t) break;
+    for(var key in QUAL) if(t.startsWith(key)) return {val:QUAL[key], next:i+k+1};
+  }
+  return null;
+}
+function isDigitNum(t){ return /^\d+(?:[.,]\d+)?$/.test(t); }
+function toFloat(t){ return parseFloat(t.replace(',', '.')); }
+
+// число словами, начиная с позиции i; возвращает {val, next} или null
+function tryNum(tokens, i){
+  if(tokens[i] && tokens[i].startsWith('тысяч')) return {val:1000, next:i+1};
+  var v=0, used=0, hit=false;
+  while(i+used<tokens.length && used<3){
+    var tk=tokens[i+used], n;
+    if(isDigitNum(tk)){ v=toFloat(tk); used++; hit=true; break; }
+    n=NUM[tk];
+    if(n===undefined) break;
+    v+=n; used++; hit=true;
+  }
+  if(!hit) return null;
+  var next=i+used;
+  if(tokens[next] && tokens[next].startsWith('тысяч')){ v*=1000; next++; }
+  if(tokens[next]==='с' && tokens[next+1]==='половиной'){ v+=0.5; next+=2; }
+  return {val:v, next:next};
+}
+
+// разбор фразы о здоровье (голос, заметка, импорт-строка)
+function parseHealth(raw){
+  var text=' '+raw.toLowerCase().replace(/ё/g,'е').replace(/(\d),(\d)/g,'$1.$2').replace(/(\d)\/(\d+)/g,'$1 на $2')+' ';
+  var tokens=text.trim().split(/[\s,;:!?·*—\-]+/).filter(function(w){return w;}).map(function(t){return t.replace(/\.+$/,'').replace(/\.$/,'');}).filter(Boolean);
+  var used=new Array(tokens.length).fill(false);
+  var out={};
+  function mark(a,b){ for(var k=a;k<b;k++) used[k]=true; }
+  for(var i=0;i<tokens.length;i++){
+    if(used[i]) continue;
+    var t=tokens[i];
+    // самочувствие и настроение словами: «самочувствие хорошее», «настроение плохое»
+    if(!out.feel && t.startsWith('самочувств')){
+      var q=qualAt(tokens,i+1);
+      if(q){ out.feel=q.val; used[i]=true; mark(i+1,q.next); i=q.next-1; }
+      continue;
+    }
+    if(!out.mood && t.startsWith('настроен')){
+      var q2=qualAt(tokens,i+1);
+      if(q2){ out.mood=q2.val; used[i]=true; mark(i+1,q2.next); i=q2.next-1; }
+      continue;
+    }
+    // вес
+    if(!out.weight && (t==='вес'||t==='весит'||t==='весу'||t==='весе'||t==='весом')){
+      var n=tryNum(tokens,i+1);
+      if(n){ out.weight=n.val; used[i]=true; mark(i+1,n.next); i=n.next-1; }
+      continue;
+    }
+    // сон
+    if(!out.sleep && (t.startsWith('сон')||t==='спал'||t==='спала'||t==='сплю'||t==='уснул'||t==='уснула')){
+      var n2=tryNum(tokens,i+1);
+      if(n2){ out.sleep=n2.val; used[i]=true; mark(i+1,n2.next);
+        if(tokens[n2.next]&&(tokens[n2.next].startsWith('час')||tokens[n2.next]==='ч')){ used[n2.next]=true; i=n2.next; }
+        else i=n2.next-1;
+      }
+      continue;
+    }
+    // давление: слово или шаблон «число на число»
+    if(!out.sys && t.startsWith('давлени')){
+      var n3=tryNum(tokens,i+1);
+      if(n3){ used[i]=true; mark(i+1,n3.next); out.sys=n3.val; i=n3.next-1;
+        if(tokens[n3.next]==='на'){
+          var n4=tryNum(tokens,n3.next+1);
+          if(n4){ out.dia=n4.val; used[n3.next]=true; mark(n3.next+1,n4.next); i=n4.next-1; }
+        }
+      }
+      continue;
+    }
+    if(!out.sys && isDigitNum(t) && tokens[i+1]==='на' && isDigitNum(tokens[i+2])){
+      out.sys=toFloat(t); out.dia=toFloat(tokens[i+2]); mark(i,i+3); i+=2; continue;
+    }
+    // пульс
+    if(!out.pulse && t.startsWith('пульс')){
+      var n5=tryNum(tokens,i+1);
+      if(n5){ out.pulse=n5.val; used[i]=true; mark(i+1,n5.next); i=n5.next-1; }
+      continue;
+    }
+    // вода
+    if(!out.water && (t.startsWith('вода')||t==='воды'||t==='воду'||t==='водой'||t.startsWith('стакан'))){
+      var n6=tryNum(tokens,i+1);
+      if(n6){ out.water=n6.val; used[i]=true; mark(i+1,n6.next);
+        for(var q=n6.next;q<n6.next+2;q++) if(tokens[q]&&tokens[q].startsWith('стакан')){ used[q]=true; i=q; }
+      }
+      continue;
+    }
+    // шаги/минуты: число + «тысяч» + «шагов»
+    if(isDigitNum(t)||NUM[t]!==undefined||t.startsWith('тысяч')){
+      var n7=tryNum(tokens,i);
+      if(n7){
+        var val=n7.val, look=n7.next;
+        if(tokens[look]&&tokens[look].startsWith('шаг')){ out.steps=val; used[i]=true; mark(i+1,look); used[look]=true; i=look; continue; }
+        if(tokens[look]&&tokens[look].startsWith('минут')){ out.steps=val; out.stepsUnit='мин'; used[i]=true; mark(i+1,look); used[look]=true; i=look; continue; }
+        if(tokens[look]&&tokens[look].startsWith('стакан')){ out.water=val; used[i]=true; mark(i+1,look); used[look]=true; i=look; continue; }
+      }
+      continue;
+    }
+    if(t.startsWith('шаг')){
+      var n8=tryNum(tokens,i+1);
+      if(n8){ out.steps=n8.val; used[i]=true; mark(i+1,n8.next); i=n8.next-1; }
+      continue;
+    }
+    // лекарства
+    if(t.startsWith('принял')||t.startsWith('выпил')){ out.medsAll=true; used[i]=true; continue; }
+    // остальное — в заметку
+  }
+  var rest=[];
+  for(var j=0;j<tokens.length;j++) if(!used[j]) rest.push(tokens[j]);
+  out.note=rest.join(' ');
+  return out;
+}
+
+function normRec(r){
+  r = r||{};
+  var num=function(x){ if(x===undefined||x===null||x==='') return null; var v=parseFloat(String(x).replace(',','.')); return isNaN(v)?null:v; };
+  return {
+    date: r.date, feel: num(r.feel), mood: num(r.mood),
+    sleep: num(r.sleep), sleepq: num(r.sleepq),
+    sys: num(r.sys), dia: num(r.dia), pulse: num(r.pulse),
+    weight: num(r.weight), water: num(r.water),
+    steps: num(r.steps), stepsUnit: r.stepsUnit==='мин'?'мин':'шаги',
+    medsTaken: Array.isArray(r.medsTaken)?r.medsTaken:[], note: r.note||''
+  };
+}
+
+function recHasData(r){
+  return !!(r.feel||r.mood||r.sleep||r.sleepq||r.sys||r.dia||r.pulse||r.weight||r.water||r.steps||r.medsTaken.length||(r.note&&r.note.trim()));
+}
+
+function pad2(n){ return (n<10?'0':'')+n; }
+function dateStr(d){ return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate()); }
+function todayStr(){ return dateStr(new Date()); }
+function ruDate(s){ var p=s.split('-'); return p[2]+'.'+p[1]+'.'+p[0]; }
+function cutDate(days){ var d=new Date(); d.setDate(d.getDate()-days); return dateStr(d); }
+function avg(arr){ var a=arr.filter(function(x){return x!==null&&x!==undefined;}); if(!a.length) return null; return a.reduce(function(s,x){return s+x;},0)/a.length; }
+
+// CSV: колонки по ключевым словам в шапке; без шапки — построчный разбор
+var CSV_KEYS={
+  date:['дата','date'], sleep:['сон'], sleepq:['качеств'], feel:['самочувств'],
+  pulse:['пульс'], weight:['вес'],
+  sys:['верхн'], dia:['нижн'], bp:['давлени'],
+  water:['вода','стакан'], steps:['шаги','шагов','активн','минут'],
+  meds:['лекарств','прием','препарат'], note:['заметк','примеч','симптом','коммент','note']
+};
+function splitCSVLine(line){
+  var parts=[], cur='', q=false;
+  for(var i=0;i<line.length;i++){
+    var c=line[i];
+    if(q){ if(c==='"'&&line[i+1]==='"'){cur+='"';i++;} else if(c==='"'){q=false;} else cur+=c; }
+    else{ if(c==='"'){q=true;} else if(c===';'||c==='\t'){parts.push(cur);cur='';} else cur+=c; }
+  }
+  parts.push(cur);
+  return parts;
+}
+function parseBPCell(v){
+  if(!v) return null;
+  var m=v.replace(/,/g,'.').match(/(\d{2,3})\D+(\d{2,3})/);
+  return m?{sys:+m[1],dia:+m[2]}:null;
+}
+//== LOGIC END ==
+
+// ===== состояние =====
+var KEY='health_v1';
+var DB={recs:{}, meds:[], remind:'21:00'};
+var editDate=null;
+var pendingMeds=[]; // отмеченные сегодня (до сохранения)
+var lastFinal='';
+
+function loadDB(){
+  try{
+    var raw=localStorage.getItem(KEY);
+    if(raw){ var d=JSON.parse(raw);
+      DB.recs=d.recs||{}; DB.meds=Array.isArray(d.meds)?d.meds:[];
+      DB.remind=d.remind||'21:00';
+      for(var k in DB.recs) DB.recs[k]=normRec(DB.recs[k]);
+    }
+  }catch(e){ console.log('load err',e); }
+}
+function saveDB(){ try{ localStorage.setItem(KEY, JSON.stringify(DB)); }catch(e){ toast('Не сохранилось — возможно, переполнено хранилище'); } }
+function getRec(date){ return DB.recs[date]||null; }
+
+// ===== тема =====
+function applyTheme(dark){ document.body.classList.toggle('dark',dark); document.getElementById('themebtn').textContent=dark?'☀️':'🌙'; }
+document.getElementById('themebtn').onclick=function(){
+  var dark=!document.body.classList.contains('dark');
+  applyTheme(dark); localStorage.setItem('health_theme',dark?'dark':'light');
+};
+applyTheme(localStorage.getItem('health_theme')==='dark');
+
+// ===== шкалы =====
+var FEEL=['😞','😕','😐','🙂','😄'];
+function buildScale(id, field){
+  var el=document.getElementById(id); el.innerHTML='';
+  FEEL.forEach(function(em,idx){
+    var b=document.createElement('button'); b.textContent=em;
+    b.onclick=function(){ form[field]=(idx+1); renderScales(); };
+    el.appendChild(b);
+  });
+}
+var form={feel:null,mood:null,sleepq:null};
+function renderScales(){
+  [['feelScale','feel'],['moodScale','mood'],['sleepqScale','sleepq']].forEach(function(p){
+    var btns=document.getElementById(p[0]).children;
+    for(var i=0;i<btns.length;i++) btns[i].className=form[p[1]]===i+1?'on':'';
+  });
+}
+buildScale('feelScale','feel'); buildScale('moodScale','mood'); buildScale('sleepqScale','sleepq');
+
+// ===== лекарства =====
+function renderMeds(){
+  var box=document.getElementById('medChips'); box.innerHTML='';
+  if(!DB.meds.length){
+    box.innerHTML='<div class="hint">Пока ничего не добавлено — впишите препарат выше, и он появится галочкой.</div>';
+  }
+  DB.meds.forEach(function(name){
+    var c=document.createElement('button');
+    c.className='chip'+(pendingMeds.indexOf(name)>=0?' on':'');
+    c.textContent=(pendingMeds.indexOf(name)>=0?'✓ ':'')+name;
+    c.onclick=function(){
+      var i=pendingMeds.indexOf(name);
+      if(i>=0) pendingMeds.splice(i,1); else pendingMeds.push(name);
+      renderMeds();
+    };
+    c.oncontextmenu=function(ev){ ev.preventDefault();
+      if(confirm('Удалить «'+name+'» из списка лекарств?')){ DB.meds=DB.meds.filter(function(m){return m!==name;}); pendingMeds=pendingMeds.filter(function(m){return m!==name;}); saveDB(); renderMeds(); }
+    };
+    box.appendChild(c);
+  });
+}
+document.getElementById('medAdd').onclick=function(){
+  var v=document.getElementById('medNew').value.trim();
+  if(v && DB.meds.indexOf(v)<0){ DB.meds.push(v); saveDB(); }
+  document.getElementById('medNew').value=''; renderMeds();
+};
+
+// ===== вода =====
+document.getElementById('wminus').onclick=function(){ var el=document.getElementById('f_water'); el.value=Math.max(0,(parseInt(el.value)||0)-1); };
+document.getElementById('wplus').onclick=function(){ var el=document.getElementById('f_water'); el.value=Math.min(20,(parseInt(el.value)||0)+1); };
+
+// ===== форма: загрузка/сохранение =====
+var FIELDS=['f_sleep','f_sys','f_dia','f_pulse','f_weight','f_water','f_steps','f_note'];
+function clearForm(){
+  FIELDS.forEach(function(id){ var el=document.getElementById(id); el.value=''; el.classList.remove('vv'); });
+  form={feel:null,mood:null,sleepq:null};
+  document.getElementById('f_stepsunit').value='шаги';
+  pendingMeds=[]; renderScales(); renderMeds();
+}
+function fillForm(rec, highlight){
+  clearForm();
+  if(!rec) return;
+  form.feel=rec.feel; form.mood=rec.mood; form.sleepq=rec.sleepq;
+  document.getElementById('f_sleep').value=rec.sleep!==null?rec.sleep:'';
+  document.getElementById('f_sys').value=rec.sys!==null?rec.sys:'';
+  document.getElementById('f_dia').value=rec.dia!==null?rec.dia:'';
+  document.getElementById('f_pulse').value=rec.pulse!==null?rec.pulse:'';
+  document.getElementById('f_weight').value=rec.weight!==null?rec.weight:'';
+  document.getElementById('f_water').value=rec.water!==null?rec.water:'';
+  document.getElementById('f_steps').value=rec.steps!==null?rec.steps:'';
+  document.getElementById('f_stepsunit').value=rec.stepsUnit||'шаги';
+  document.getElementById('f_note').value=rec.note||'';
+  pendingMeds=rec.medsTaken.slice();
+  renderScales(); renderMeds();
+  if(highlight){
+    recHasData(rec) && FIELDS.forEach(function(id){ document.getElementById(id).classList.add('vv'); });
+  }
+}
+document.getElementById('savebtn').onclick=function(){
+  var date=editDate||todayStr();
+  var rec=normRec({
+    date:date,
+    feel:form.feel, mood:form.mood, sleepq:form.sleepq,
+    sleep:document.getElementById('f_sleep').value,
+    sys:document.getElementById('f_sys').value, dia:document.getElementById('f_dia').value,
+    pulse:document.getElementById('f_pulse').value,
+    weight:document.getElementById('f_weight').value,
+    water:document.getElementById('f_water').value,
+    steps:document.getElementById('f_steps').value,
+    stepsUnit:document.getElementById('f_stepsunit').value,
+    note:document.getElementById('f_note').value.trim(),
+    medsTaken:pendingMeds.slice()
+  });
+  if(!recHasData(rec)){ toast('Нечего сохранять — запишите что-нибудь 🙂'); return; }
+  var prev=getRec(date)||{};
+  ['note'].forEach(function(k){ if(!rec[k]&&prev[k]) rec[k]=prev[k]; });
+  if(rec.medsTaken.length<prev.medsTaken.length) rec.medsTaken=prev.medsTaken;
+  DB.recs[date]=rec; saveDB();
+  toast('Сохранено · '+ruDate(date));
+  clearForm(); renderHistory(); renderStats(); checkDoctor();
+  if(editDate){ backToToday(); }
+};
+function backToToday(){ editDate=null; showEditBanner(); }
+function showEditBanner(){
+  var b=document.getElementById('editbanner');
+  if(editDate){
+    b.hidden=false;
+    b.innerHTML='Редактируете <b>'+ruDate(editDate)+'</b> · <button class="bigsec" id="backtoday" style="margin:0;padding:8px 12px;display:inline;width:auto">← к сегодняшнему дню</button>';
+    document.getElementById('backtoday').onclick=backToToday;
+  } else b.hidden=true;
+}
+
+// ===== история =====
+function recLine(r){
+  var parts=[];
+  if(r.feel) parts.push('самочувствие '+FEEL[r.feel-1]);
+  if(r.mood) parts.push('настроение '+FEEL[r.mood-1]);
+  if(r.sleep) parts.push('сон '+r.sleep+' ч'+(r.sleepq?' ('+r.sleepq+'/5)':''));
+  if(r.sys) parts.push('давление '+r.sys+'/'+r.dia+(r.pulse?' · пульс '+r.pulse:''));
+  if(r.weight) parts.push('вес '+r.weight+' кг');
+  if(r.water) parts.push('вода '+r.water);
+  if(r.steps) parts.push(r.stepsUnit==='мин'?r.steps+' мин активности':r.steps+' шагов');
+  if(r.medsTaken.length) parts.push('💊 '+r.medsTaken.join(', '));
+  if(r.note) parts.push(r.note);
+  return parts.join(' · ')||'—';
+}
+function renderHistory(){
+  var box=document.getElementById('histList'); box.innerHTML='';
+  var q=(document.getElementById('histSearch').value||'').toLowerCase().replace(/ё/g,'е');
+  var dates=Object.keys(DB.recs).sort().reverse().filter(function(d){
+    if(!q) return true;
+    var r=DB.recs[d];
+    return d.indexOf(q)>=0 || (r.note||'').toLowerCase().replace(/ё/g,'е').indexOf(q)>=0;
+  });
+  document.getElementById('histEmpty').hidden=dates.length>0;
+  dates.slice(0,120).forEach(function(d){
+    var el=document.createElement('div'); el.className='recline';
+    el.innerHTML='<div class="rd">'+ruDate(d)+'</div><div class="rv">'+recLine(DB.recs[d])+'</div>';
+    el.onclick=function(){ editDate=d; fillForm(DB.recs[d], false); showEditBanner(); switchTab('today'); };
+    box.appendChild(el);
+  });
+}
+document.getElementById('histSearch').oninput=renderHistory;
+
+// ===== статистика =====
+function fmt(v, unit, digits){
+  if(v===null||v===undefined) return '—';
+  return v.toFixed(digits===undefined?1:digits)+(unit?' '+unit:'');
+}
+function statBlock(days){
+  var from=cutDate(days);
+  var recs=Object.keys(DB.recs).filter(function(d){return d>=from;}).map(function(d){return DB.recs[d];});
+  var wvals=recs.map(function(r){return r.weight;}).filter(function(x){return x!==null;});
+  var rows=[
+    ['Записей дней', recs.length],
+    ['Сон', fmt(avg(recs.map(function(r){return r.sleep;})),'ч')],
+    ['Качество сна', fmt(avg(recs.map(function(r){return r.sleepq;})),'/5')],
+    ['Самочувствие', fmt(avg(recs.map(function(r){return r.feel;})),'/5')],
+    ['Настроение', fmt(avg(recs.map(function(r){return r.mood;})),'/5')],
+    ['Вода', fmt(avg(recs.map(function(r){return r.water;})),'ст.')],
+    ['Вес', wvals.length?(Math.min.apply(null,wvals).toFixed(1)+' – '+Math.max.apply(null,wvals).toFixed(1)+' кг'):'—']
+  ];
+  var box=document.getElementById(days===7?'stat7':'stat30');
+  box.innerHTML='';
+  rows.forEach(function(r){
+    var el=document.createElement('div'); el.className='statline';
+    el.innerHTML='<span>'+r[0]+'</span><b>'+r[1]+'</b>';
+    box.appendChild(el);
+  });
+}
+function streak(){
+  var n=0, d=new Date();
+  if(!DB.recs[dateStr(d)]) d.setDate(d.getDate()-1);
+  while(DB.recs[dateStr(d)]){ n++; d.setDate(d.getDate()-1); }
+  return n;
+}
+function weightChart(){
+  var pts=Object.keys(DB.recs).sort().filter(function(d){return DB.recs[d].weight!==null;}).slice(-30)
+    .map(function(d){return {d:d,w:DB.recs[d].weight};});
+  var box=document.getElementById('chart');
+  if(pts.length<2){ box.innerHTML='<div class="hint">Нужно хотя бы две записи с весом.</div>'; return; }
+  var W=600,H=150,pad=8;
+  var ws=pts.map(function(p){return p.w;});
+  var mn=Math.min.apply(null,ws), mx=Math.max.apply(null,ws);
+  if(mx-mn<1){ mx=mn+1; mn=mn-1; }
+  var X=function(i){ return pad+i*(W-2*pad)/(pts.length-1); };
+  var Y=function(v){ return H-pad-(v-mn)/(mx-mn)*(H-2*pad); };
+  var line=pts.map(function(p,i){ return X(i).toFixed(1)+','+Y(p.w).toFixed(1); }).join(' ');
+  var dots=pts.map(function(p,i){ return '<circle cx="'+X(i).toFixed(1)+'" cy="'+Y(p.w).toFixed(1)+'" r="4" fill="var(--acc)"><title>'+ruDate(p.d)+': '+p.w+' кг</title></circle>'; }).join('');
+  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto"><polyline points="'+line+'" fill="none" stroke="var(--acc)" stroke-width="3" stroke-linejoin="round"/>'+dots+'</svg>';
+}
+function renderStats(){
+  statBlock(7); statBlock(30); weightChart();
+  var n=streak();
+  document.getElementById('streak').textContent=n?(n+' '+plural(n,'день','дня','дней')+' 🔥'):'— пока без серии —';
+  document.getElementById('statEmpty').hidden=Object.keys(DB.recs).length>=2;
+}
+function plural(n,a,b,c){ var m=n%100; if(m>=11&&m<=14) return c; switch(n%10){case 1:return a;case 2:case 3:case 4:return b;default:return c;} }
+
+// ===== вкладки =====
+function switchTab(tab){
+  ['today','history','stats'].forEach(function(t){
+    document.getElementById('tab-'+t).classList.toggle('hidden',t!==tab);
+    document.getElementById('nb-'+t).classList.toggle('on',t===tab);
+  });
+  if(tab==='history') renderHistory();
+  if(tab==='stats') renderStats();
+}
+['today','history','stats'].forEach(function(t){
+  document.getElementById('nb-'+t).onclick=function(){ switchTab(t); };
+});
+
+// ===== голос =====
+var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+var rec=null, listening=false;
+document.getElementById('voicebtn').onclick=function(){
+  document.getElementById('voicewrap').classList.remove('hidden');
+  document.getElementById('voiceText').value=''; document.getElementById('interim').textContent='';
+  document.getElementById('voicePreview').textContent='';
+  document.getElementById('voiceHint').textContent = SR ? 'Говорите — текст появится ниже. Можно говорить про сон, вес, давление, воду, шаги, лекарства, самочувствие.' : 'Микрофон браузера недоступен. Включите голосовой ввод на клавиатуре Gboard (значок 🎤 на клавиатуре) и надиктуйте текст прямо в поле выше — офлайн-пакет русского работает и без интернета.';
+  if(SR && !listening){
+    rec=new SR(); rec.lang='ru-RU'; rec.continuous=false; rec.interimResults=true;
+    rec.onresult=function(e){
+      var interim='', fin='';
+      for(var i=0;i<e.results.length;i++){
+        var r=e.results[i];
+        if(r.isFinal) fin+=r[0].transcript; else interim+=r[0].transcript;
+      }
+      document.getElementById('interim').textContent=interim?('…'+interim):'';
+      if(fin && fin.trim() && fin.trim()!==lastFinal){ lastFinal=fin.trim(); document.getElementById('voiceText').value=fin.trim(); updatePreview(); }
+    };
+    rec.onend=function(){ listening=false; };
+    rec.onerror=function(){ };
+    try{ rec.start(); listening=true; }catch(e){}
+  }
+};
+function updatePreview(){
+  var t=document.getElementById('voiceText').value.trim();
+  if(!t){ document.getElementById('voicePreview').textContent=''; return; }
+  var p=parseHealth(t), parts=[];
+  if(p.weight) parts.push('вес '+p.weight);
+  if(p.sleep) parts.push('сон '+p.sleep);
+  if(p.sys) parts.push('давление '+p.sys+'/'+p.dia);
+  if(p.pulse) parts.push('пульс '+p.pulse);
+  if(p.water) parts.push('вода '+p.water);
+  if(p.steps) parts.push(p.stepsUnit==='мин'?p.steps+' мин':p.steps+' шагов');
+  if(p.medsAll) parts.push('💊 все приняты');
+  if(p.note) parts.push('заметка: '+p.note);
+  document.getElementById('voicePreview').textContent=parts.length?('Распознано: '+parts.join(' · ')):'Ничего не распознано — проверьте текст.';
+}
+document.getElementById('voiceText').oninput=updatePreview;
+document.getElementById('voiceApply').onclick=function(){
+  var t=document.getElementById('voiceText').value.trim();
+  if(!t){ toast('Сначала скажите или напишите текст'); return; }
+  var p=parseHealth(t);
+  fillForm(null,false);
+  if(p.feel) form.feel=p.feel;
+  if(p.mood) form.mood=p.mood;
+  if(p.sleep) document.getElementById('f_sleep').value=p.sleep;
+  if(p.sleepq) form.sleepq=p.sleepq;
+  if(p.sys) document.getElementById('f_sys').value=p.sys;
+  if(p.dia) document.getElementById('f_dia').value=p.dia;
+  if(p.pulse) document.getElementById('f_pulse').value=p.pulse;
+  if(p.weight) document.getElementById('f_weight').value=p.weight;
+  if(p.water) document.getElementById('f_water').value=p.water;
+  if(p.steps){ document.getElementById('f_steps').value=p.steps; if(p.stepsUnit) document.getElementById('f_stepsunit').value=p.stepsUnit; }
+  if(p.medsAll) DB.meds.forEach(function(m){ if(pendingMeds.indexOf(m)<0) pendingMeds.push(m); });
+  if(p.note) document.getElementById('f_note').value=p.note.charAt(0).toUpperCase()+p.note.slice(1);
+  renderScales(); renderMeds();
+  ['f_sleep','f_sys','f_dia','f_pulse','f_weight','f_water','f_steps','f_note'].forEach(function(id){
+    var el=document.getElementById(id); if(el.value!=='') el.classList.add('vv');
+  });
+  document.getElementById('voicewrap').classList.add('hidden');
+  if(listening&&rec){ try{ rec.stop(); }catch(e){} }
+  switchTab('today');
+  toast('Применено — проверьте и сохраните');
+};
+document.getElementById('voiceCancel').onclick=function(){
+  document.getElementById('voicewrap').classList.add('hidden');
+  if(listening&&rec){ try{ rec.stop(); }catch(e){} }
+};
+
+// ===== бэкап: экспорт =====
+document.getElementById('exportbtn').onclick=function(){
+  var choice=prompt('Экспорт: введите М — Markdown, К — CSV','М');
+  if(!choice) return;
+  var c=choice.trim().toLowerCase().charAt(0);
+  if(c==='м'||c==='m'){ doExportMD(); } else if(c==='к'||c==='c'||c==='k'){ doExportCSV(); } else toast('Не поняла формат — введите М или К');
+};
+function doExportMD(){
+  var lines=['# Дневник здоровья (экспорт '+todayStr()+')',''];
+  Object.keys(DB.recs).sort().forEach(function(d){
+    lines.push('## '+ruDate(d));
+    lines.push(recLine(DB.recs[d]));
+  });
+  if(DB.meds.length) lines.push('','## Лекарства',DB.meds.join(', '));
+  download('health_'+todayStr()+'.md',lines.join('\n'),'text/markdown');
+}
+function doExportCSV(){
+  var rows=[['дата','сон','качество сна','самочувствие','настроение','верхнее','нижнее','пульс','вес','вода','шаги','лекарства','заметка'].join(';')];
+  Object.keys(DB.recs).sort().forEach(function(d){
+    var r=DB.recs[d];
+    rows.push([d,r.sleep||'',r.sleepq||'',r.feel||'',r.mood||'',r.sys||'',r.dia||'',r.pulse||'',r.weight||'',r.water||'',r.steps?r.steps+(r.stepsUnit==='мин'?' мин':''):'',r.medsTaken.join(', '),r.note].map(csvCell).join(';'));
+  });
+  download('health_'+todayStr()+'.csv','\uFEFF'+rows.join('\r\n'),'text/csv');
+}
+function csvCell(v){ v=String(v); return (v.indexOf(';')>=0||v.indexOf('"')>=0||v.indexOf('\n')>=0)?'"'+v.replace(/"/g,'""')+'"':v; }
+function download(name,text,mime){
+  var b=new Blob([text],{type:mime+';charset=utf-8'});
+  var a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=name;
+  document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },400);
+}
+
+// ===== бэкап: импорт =====
+document.getElementById('importbtn').onclick=function(){ document.getElementById('filein').click(); };
+document.getElementById('filein').onchange=function(e){
+  var f=e.target.files[0]; if(!f) return;
+  var fr=new FileReader();
+  fr.onload=function(){
+    var text='';
+    try{ text=new TextDecoder('utf-8').decode(fr.result); }catch(err){ text=fr.result; }
+    if(text.indexOf('\uFFFD')>=0){ try{ text=new TextDecoder('windows-1251').decode(fr.result); }catch(err2){} }
+    var n=importText(text);
+    saveDB(); renderHistory(); renderStats();
+    toast(n.skipped?('Загружено '+n.added+' · пропущено дублей '+n.skipped):('Загружено '+n.added));
+  };
+  fr.readAsArrayBuffer(f);
+  e.target.value='';
+};
+function importText(text){
+  var added=0, skipped=0, lines=text.split(/\r?\n/);
+  var headerIdx=-1, map=null;
+  for(var i=0;i<Math.min(lines.length,3);i++){
+    var low=lines[i].toLowerCase().replace(/ё/g,'е');
+    if(low.indexOf('дата')>=0||low.indexOf('date')>=0){ headerIdx=i; break; }
+  }
+  if(headerIdx>=0){
+    var cols=splitCSVLine(lines[headerIdx]).map(function(c){return c.toLowerCase().replace(/ё/g,'е');});
+    map={};
+    Object.keys(CSV_KEYS).forEach(function(field){
+      for(var c=0;c<cols.length;c++){
+        if(CSV_KEYS[field].some(function(k){return cols[c].indexOf(k)>=0;})){ map[field]=c; break; }
+      }
+    });
+  }
+  for(var j=(headerIdx>=0?headerIdx+1:0);j<lines.length;j++){
+    var line=lines[j].trim(); if(!line) continue;
+    var dm=line.match(/(\d{4})-(\d{2})-(\d{2})/), dm2=line.match(/(\d{1,2})\.(\d{1,2})\.(\d{4})/);
+    var date=null;
+    if(dm) date=dm[1]+'-'+dm[2]+'-'+dm[3]; else if(dm2) date=dm2[3]+'-'+pad2(+dm2[2])+'-'+pad2(+dm2[1]);
+    var rec=null;
+    if(map){
+      var cells=splitCSVLine(line);
+      var g=function(f){ return map[f]!==undefined?(cells[map[f]]||''):''; };
+      var bp=parseBPCell(g('bp'));
+      var sysV=bp?bp.sys:g('sys'), diaV=bp?bp.dia:g('dia');
+      rec={date:g('date')||date,
+        sleep:g('sleep'), sleepq:g('sleepq'), feel:g('feel'), mood:g('mood'),
+        sys:sysV, dia:diaV, pulse:g('pulse'), weight:g('weight'),
+        water:g('water'), steps:g('steps'),
+        medsTaken:g('meds')?g('meds').split(',').map(function(s){return s.trim();}).filter(Boolean):[],
+        note:g('note')};
+    } else {
+      var body=line.replace(/[#*]+/g,' ').trim();
+      if(date){ body=body.replace(dm?dm[0]:'','').replace(dm2?dm2[0]:'','').trim(); }
+      if(!body) continue;
+      var p=parseHealth(body);
+      rec={date:date||todayStr(), sleep:p.sleep, sleepq:p.sleepq, feel:p.feel, mood:p.mood,
+        sys:p.sys, dia:p.dia, pulse:p.pulse, weight:p.weight, water:p.water,
+        steps:p.steps, stepsUnit:p.stepsUnit, medsTaken:[], note:p.note};
+      if(date) rec.date=date;
+    }
+    rec=normRec(rec); if(!rec.date) rec.date=todayStr();
+    if(!recHasData(rec)) continue;
+    var prev=DB.recs[rec.date];
+    if(prev){
+      for(var k in rec){ if((rec[k]===null||rec[k]===''||JSON.stringify(rec[k])==='[]') && prev[k]) rec[k]=prev[k]; }
+      skipped++;
+    }
+    DB.recs[rec.date]=rec; added++;
+  }
+  return {added:added, skipped:skipped};
+}
+
+// ===== напоминания =====
+var remindHHMM=null, remindDay='';
+function remindInit(){
+  remindDay=todayStr(); remindHHMM=null;
+  var inp=document.getElementById('remindTime');
+  inp.value=DB.remind;
+  inp.onchange=function(){ DB.remind=inp.value||'21:00'; saveDB(); toast('Чек-ин в '+DB.remind); };
+}
+function beep(){
+  try{
+    var ctx=new (window.AudioContext||window.webkitAudioContext)();
+    [0,180,360].forEach(function(delay){
+      var o=ctx.createOscillator(), g=ctx.createGain();
+      o.frequency.value=880; o.type='sine'; g.gain.value=0.12;
+      o.connect(g); g.connect(ctx.destination);
+      o.start(ctx.currentTime+delay/1000); o.stop(ctx.currentTime+delay/1000+0.15);
+    });
+  }catch(e){}
+  if(navigator.vibrate) try{ navigator.vibrate([120,80,120]); }catch(e){}
+}
+function showRemind(txt){ document.getElementById('remindText').textContent=txt; document.getElementById('remind').classList.remove('hidden'); }
+document.getElementById('rGo').onclick=function(){ document.getElementById('remind').classList.add('hidden'); switchTab('today'); };
+document.getElementById('rClose').onclick=function(){ document.getElementById('remind').classList.add('hidden'); localStorage.setItem('health_rem_'+remindDay,'1'); };
+document.getElementById('rSnooze').onclick=function(){
+  var p=(remindHHMM||DB.remind).split(':');
+  var d=new Date(); d.setHours(+p[0],+p[1]+30,0,0);
+  remindHHMM=pad2(d.getHours())+':'+pad2(d.getMinutes());
+  document.getElementById('remind').classList.add('hidden');
+  toast('Напомню в '+remindHHMM);
+};
+setInterval(function(){
+  var day=todayStr();
+  if(remindDay!==day){ remindDay=day; remindHHMM=null; }
+  if(localStorage.getItem('health_rem_'+day)) return;
+  if(DB.recs[day] && recHasData(DB.recs[day])) return;
+  var target=remindHHMM||DB.remind;
+  var now=new Date();
+  var nowHM=pad2(now.getHours())+':'+pad2(now.getMinutes());
+  if(nowHM>=target){ beep(); showRemind('⏰ Вечерний чек-ин ('+DB.remind+') — пора записать день!'); localStorage.setItem('health_rem_'+day,'1'); }
+},20000);
+
+// ===== мягкая подсказка про врача =====
+function checkDoctor(){
+  var bad=0;
+  for(var i=0;i<3;i++){
+    var r=DB.recs[cutDate(i)];
+    if(r&&r.feel&&r.feel<=2) bad++;
+  }
+  var box=document.getElementById('docwarn');
+  if(bad>=3){
+    var last=localStorage.getItem('health_doc_last');
+    var now=todayStr();
+    if(!last||now>last){
+      box.hidden=false;
+      box.innerHTML='💛 Самочувствие было плохим несколько дней подряд. Дневник — не врач; если это продолжается, лучше показаться специалисту.';
+      localStorage.setItem('health_doc_last',now);
+    }
+  }
+}
+
+// ===== помощники =====
+var toastT=null;
+function toast(msg){
+  var t=document.getElementById('toast');
+  t.textContent=msg; t.style.opacity=1;
+  clearTimeout(toastT); toastT=setTimeout(function(){ t.style.opacity=0; },2600);
+}
+document.getElementById('helpbtn').onclick=function(){ document.getElementById('helpwrap').classList.remove('hidden'); };
+document.getElementById('helpClose').onclick=function(){ document.getElementById('helpwrap').classList.add('hidden'); };
+
+// ===== запуск =====
+loadDB();
+fillForm(getRec(todayStr()),false);
+renderHistory(); renderStats(); remindInit(); checkDoctor();
+</script>
+</body>
+</html>
